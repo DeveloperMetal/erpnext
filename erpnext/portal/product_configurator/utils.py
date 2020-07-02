@@ -145,7 +145,7 @@ def get_item_codes_by_attributes(attribute_filters, template_item_code=None):
 			GROUP BY
 				t1.parent
 			ORDER BY
-				NULL
+				t2.item_group
 		'''.format(attribute_query=attribute_query, variant_of_query=variant_of_query)
 
 		item_codes = set([r[0] for r in frappe.db.sql(query, query_values)])
@@ -373,6 +373,7 @@ def get_items(filters=None, search=None):
 			left_joins.append(f[0])
 
 	left_join = ' '.join(['LEFT JOIN `tab{0}` on (`tab{0}`.parent = `tabItem`.name)'.format(l) for l in left_joins])
+	left_join = left_join.join('LEFT JOIN `tabItem Price` ON `tabItem`.`name` = `tabItem Price`.`item_code`')
 
 	results = frappe.db.sql('''
 		SELECT
@@ -388,7 +389,9 @@ def get_items(filters=None, search=None):
 		GROUP BY
 			`tabItem`.`name`
 		ORDER BY
-			`tabItem`.`weightage` DESC
+			`tabItem`.`weightage` DESC,
+			`tabItem`.`item_group` DESC,
+			`tabItem Price`.`price_list_rate` DESC
 		LIMIT
 			{page_length}
 		OFFSET
