@@ -63,6 +63,7 @@ install:
 
   - bench get-app erpnext $TRAVIS_BUILD_DIR
   - bench start &
+  
   - bench --site test_site reinstall --yes
 
 after_script:
