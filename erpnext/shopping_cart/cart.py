@@ -246,6 +246,7 @@ def decorate_quotation_doc(doc):
 
 def _get_cart_quotation(party=None):
 	'''Return the open Quotation of type "Shopping Cart" or make a new one'''
+	print("_get_cart_quotation")
 	if not party:
 		party = get_party()
 
@@ -273,6 +274,16 @@ def _get_cart_quotation(party=None):
 		qdoc.contact_email = frappe.session.user
 
 		qdoc.flags.ignore_permissions = True
+
+		# Hook: Allows overriding cart quotation creation for shopping cart
+		#       override_shopping_cart_get_quotation(party, qdoc)
+		#
+		#		party: A doctype object(ex: Customer)
+		#		qdoc: Quotation doctype
+		hooks = frappe.get_hooks("override_shopping_cart_get_quotation") or []
+		for method in hooks:
+			frappe.call(method, party=party, qdoc=qdoc)
+
 		qdoc.run_method("set_missing_values")
 		apply_cart_settings(party, qdoc)
 
