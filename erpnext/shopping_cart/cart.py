@@ -409,8 +409,6 @@ def get_party(user=None):
 	for method in hooks:
 		contact_name = frappe.call(method, contact_name=contact_name) or contact_name
 
-	print("Party contact: %s" % contact_name)
-
 	if contact_name:
 		contact = frappe.get_doc('Contact', contact_name)
 		if contact.links:
