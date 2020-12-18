@@ -270,6 +270,20 @@ def _get_cart_quotation(party=None):
 
 		qdoc.flags.ignore_permissions = True
 
+		# Order For feature:
+		if "order_for" in frappe.session.data:
+			customer_name = frappe.session.data.order_for.get("customer_name")
+
+			if customer_name:
+				# override contact person
+				primary_contact = frappe.session.data.order_for.get("customer_primary_contact_name")
+
+				qdoc.contact_person = primary_contact
+				qdoc.contact_email = frappe.get_value("Contact", primary_contact, "email_id")
+
+				# override customer
+				qdoc.party_name = customer_name
+
 		# Hook: Allows overriding cart quotation creation for shopping cart
 		#
 		# Signature:
@@ -396,8 +410,7 @@ def get_party(user=None):
 		customer_name = frappe.session.data.order_for.get("customer_name")
 		
 		if customer_name and "customer_primary_contact_name" in frappe.session.data.order_for:
-			primary_contact = frappe.session.data.order_for.customer_primary_contact_name
-			contact_name primary_contact
+			contact_name = frappe.session.data.order_for.customer_primary_contact_name
 
 	# Hook: Allows overriding the contact person used by the shopping cart
 	#
