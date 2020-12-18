@@ -391,6 +391,14 @@ def get_party(user=None):
 	contact_name = get_contact_name(user)
 	party = None
 
+	# Order For feature. Sets current customer's primary contact for this session.
+	if "order_for" in frappe.session.data:
+		customer_name = frappe.session.data.order_for.get("customer_name")
+		
+		if customer_name and "customer_primary_contact_name" in frappe.session.data.order_for:
+			primary_contact = frappe.session.data.order_for.customer_primary_contact_name
+			contact_name primary_contact
+
 	# Hook: Allows overriding the contact person used by the shopping cart
 	#
 	# Signature:
