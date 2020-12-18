@@ -11,7 +11,7 @@ def on_session_start():
 	order_for = frappe.session.data.order_for
 
 	# Set default customer
-	if not order_for.get("customer_name"):
+	if not order_for.get("customer_name") and frappe.session.user not in ("Guest", "Administrator"):
 		contact = frappe.get_doc("Contact", {"email_id": frappe.session.user})
 		customer_links = []
 		for link in contact.links:
