@@ -200,7 +200,7 @@ frappe.ui.form.on("Customer", {
 											windowTarget.focus();
 										}
 										// redirect pop under to website
-										windowTarget.location.href = data.landing_url || "/";
+										windowTarget.location.href = shopping_cart_settings.order_for_landing_url || "/";
 									} else {
 										if  ( shopping_cart_settings.order_for_open_in_tab ) {
 												// close pop under on error
