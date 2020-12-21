@@ -2,7 +2,7 @@ import frappe
 from frappe import _dict
 from erpnext.shopping_cart.cart import get_party
 
-def on_session_start():
+def initialise_order_for ():
 	"""Initializes the "order for" feature which allows a backend user to use the
 	shopping cart in behalf of another user"""
 
