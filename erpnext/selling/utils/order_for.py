@@ -2,7 +2,7 @@ import frappe
 from frappe import _dict
 from erpnext.shopping_cart.cart import get_party
 
-def initialise_order_for ():
+def initialise_order_for():
 	"""Initializes the "order for" feature which allows a backend user to use the
 	shopping cart in behalf of another user"""
 
@@ -10,6 +10,8 @@ def initialise_order_for ():
 	frappe.session.data["order_for"] = _dict(frappe.session.data.get("order_for", {}))
 	order_for = frappe.session.data.order_for
 
+	if frappe.session.user in ("Guest", "Administrator"):
+		return
 	# Set default customer
 	if not order_for.get("customer_name") and frappe.session.user not in ("Guest", "Administrator"):
 		contact = frappe.get_doc("Contact", {"email_id": frappe.session.user})
@@ -17,7 +19,6 @@ def initialise_order_for ():
 		for link in contact.links:
 			if link.link_doctype == "Customer":
 				customer_links.append(link)
-		
 		if len(customer_links) == 1:
 			order_for["customer_name"] = customer_links[0].link_name
 			order_for["customer_primary_contact_name"] = contact.name
@@ -32,5 +33,4 @@ def initialise_order_for ():
 			order_for["customer_name"] = customer.name
 
 		order_for["customer_group"] = customer.customer_group
-
 

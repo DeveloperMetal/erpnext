@@ -50,7 +50,7 @@ on_session_creation = [
 	"erpnext.shopping_cart.utils.set_cart_count"
 ]
 
-on_session_start = "erpnext.selling.utils.initialise_order_for "
+on_session_start = "erpnext.selling.utils.initialise_order_for"
 
 on_logout = "erpnext.shopping_cart.utils.clear_cart_count"
 
