@@ -26,7 +26,7 @@ erpnext.taxes_and_totals = erpnext.payments.extend({
 			item.rate = flt((item.rate_with_margin) - (item.discount_amount), precision('rate', item));
 		}
 
-		if ( flt(item.discount_amount) > flt(item.rate_with_margin)) {
+		if (flt(item.discount_amount) > flt(item.rate_with_margin)) {
 			item.discount_amount = flt(item.rate_with_margin);
 			item.discount_percentage = 100;
 			item.rate = 0;
