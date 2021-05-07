@@ -1498,7 +1498,7 @@ erpnext.TransactionController = erpnext.taxes_and_totals.extend({
 					}
 				]);
 			}
-		catch(err) {
+		} catch(err) {
 			console.error(err);
 		}
 	},
