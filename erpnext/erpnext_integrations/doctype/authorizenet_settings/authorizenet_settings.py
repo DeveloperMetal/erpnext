@@ -107,8 +107,6 @@ def get_order_request_info(reference_doctype, reference_docname):
 		order_by="modified desc"
 	)
 
-	print("--- Existing IR: ", existing_requests)
-
 	if len(existing_requests) > 0:
 		request = existing_requests[0]
 		return request
@@ -155,46 +153,11 @@ def query_successful_authnet_transaction(request):
 	if response is not None:
 		if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
 			if hasattr(response, 'transactions'):
-				print('Successfully retrieved transaction list.')
-				if response.messages is not None:
-					print('Message Code: %s' % response.messages.message[0]['code'].text)
-					print('Message Text: %s' % response.messages.message[0]['text'].text)
-					print('Total Number In Results: %s' % response.totalNumInResultSet)
-					print()
-
 				for transaction in response.transactions.transaction:
-					print(transaction)
-					print('Transaction Id: %s' % transaction.transId)
-					print('Transaction Status: %s' % transaction.transactionStatus)
-					if hasattr(transaction, 'accountType'):
-						print('Account Type: %s' % transaction.accountType)
-					print('Settle Amount: %.2f' % transaction.settleAmount)
-					if hasattr(transaction, 'profile'):
-						print('Customer Profile ID: %s' % transaction.profile.customerProfileId)
-					print()
-
 					if (transaction.transactionStatus == "capturedPendingSettlement" or \
 						transaction.transactionStatus == "authorizedPendingCapture") and \
 						transaction.invoiceNumber == order_ref and transaction.amount == amount:
 						return transaction
-			else:
-				if response.messages is not None:
-					print('Failed to get transaction list.')
-					print('Code: %s' % (response.messages.message[0]['code'].text))
-					print('Text: %s' % (response.messages.message[0]['text'].text))
-
-				return False
-		else:
-			if response.messages is not None:
-				print('Failed to get transaction list.')
-				print('Code: %s' % (response.messages.message[0]['code'].text))
-				print('Text: %s' % (response.messages.message[0]['text'].text))
-
-			return False
-	else:
-		print('Error. No response received.')
-		return False
-
 	return False
 
 @frappe.whitelist(allow_guest=True)
@@ -323,14 +286,9 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 		# if transaction was already recorded on authnet side, update integration
 		# request and return success
 		if order_transaction:
-			print("-- Found AUTH NET Transaction...")
-			print(order_transaction)
 			return frappe._dict({
 				"status": "Completed"
 			})
-		else:
-			print("No previous Successful AUTH NET Transaction found...")
-
 
 		# Otherwise, begine charging card
 		response = authnet_charge(request)
@@ -338,7 +296,6 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 		# translate result to response payload
 		status = "Failed"
 		if response is not None:
-			print("Response: ", response.messages.resultCode)
 			# Check to see if the API request was successfully received and acted upon
 			if response.messages.resultCode == "Ok" and hasattr(response.transactionResponse, 'messages') is True:
 				status = "Completed"
@@ -347,7 +304,6 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 		result = frappe._dict({
 			"status": status
 		})
-		print("RESPONSE: ", response)
 
 		if status == "Completed":
 			description = response_dict.get(
@@ -411,23 +367,18 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 
 	# handle exceptions during card charges
 	def chargeExceptionPredicate(exception, i):
-		print("[Charge Exception Predicate: ", i, "] ", exception)
 		result_obj = {}
 
 		if isinstance(exception, Exception):
 			description = "There was an internal error while processing your payment." + \
 				"To avoid double charges, please contact us."
 			traceback = frappe.get_traceback()
-			print(traceback)
-
 			frappe.log_error(message=traceback , title="Error processing credit card")
 			result_obj.update({
 				"status": "Failed",
 				"description": description,
 				"error": exception.message
 			})
-
-		print("[Charge Exception Predicate: ", i, "] ", result_obj)
 
 		return result_obj
 
@@ -436,10 +387,6 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 	return result
 
 def authnet_charge(request):
-
-	print("--------------------------------------")
-	print(request)
-
 	# data refs
 	data = request.data
 	reference_doc = request.reference_doc
@@ -504,9 +451,7 @@ def authnet_charge(request):
 	# Create the controller
 	createtransactioncontroller = createTransactionController(create_transaction_request)
 	if not frappe.db.get_single_value("Authorizenet Settings", "sandbox_mode"):
-		print("Using production env...")
 		createtransactioncontroller.setenvironment(constants.PRODUCTION)
-	print("...Send charge request...")
 	createtransactioncontroller.execute()
 
 	return createtransactioncontroller.getresponse()

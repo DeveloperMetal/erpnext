@@ -2,14 +2,14 @@
  * On Success Callback
  * @typedef {function(object):Promise<void>} onCardProcessSuccess
  * @callback onCardProcessSuccess
- * @param {object} status The returned status object from the server
+ * @param {ProcessStatus} status The returned status object from the server
  */
 
 /**
  * On Failure Callback
  * @typedef {function(object):Promise<void>} onCardProcessFail
  * @callback onCardProcessFail
- * @param {object} status returned status object from the server
+ * @param {ProcessStatus} status returned status object from the server
  * @param {Exception} err If one occurs, the exception instance.
  */
 
@@ -28,6 +28,7 @@ frappe.ready(function() {
 	/**
 	 * Fetches payment request status information
 	 * @param {*} data Order information data structure. See authorizenet_settings.py
+	 * @returns Promise<void>
 	 */
 	const fetch_status = async function(data) {
 		const r = await frappe.call({
@@ -47,6 +48,9 @@ frappe.ready(function() {
 	 * @param {string} label Status label to display when processing status
 	 * @param {onCardProcessSuccess} on_success a Success function callback. 
 	 * @param {onCardProcessFail} on_fail A Failure function callback
+	 * @param {int} counter A counter which is incremented internally as timeouts occur
+	 * @param {int} maxTimeouts Maximum number of timeouts before a hard error
+	 * @returns Promise<void>
 	 */
 	const check_status = async function(data, label, on_success, on_fail, counter, maxTimeouts) {
 		if ( !maxTimeouts) {
@@ -58,9 +62,8 @@ frappe.ready(function() {
 			const status = await fetch_status(data);
 
 			// Process status result
-			await process_status(status, label, on_success, on_fail);
+			await process_status(status, label, on_success, on_fail, counter, maxTimeouts);
 		} catch (err) {
-
 			if ( err ) {
 				if ( !navigator.onLine || err.status === 0 ) {
 					if ( counter < maxTimeouts ) {
@@ -72,7 +75,7 @@ frappe.ready(function() {
 							5000, 
 							maxTimeouts
 						);
-						return;
+						return; // only early exit when queuing up a delayed check_status.
 					}
 				}
 			}
@@ -108,6 +111,9 @@ frappe.ready(function() {
 	 * @param {string} label A label to display to the user during processing
 	 * @param {onCardProcessSuccess} on_success a Success function callback. 
 	 * @param {onCardProcessFail} on_fail A Failure function callback
+	 * @param {int} counter A counter which is incremented internally as timeouts occur
+	 * @param {int} maxTimeouts Maximum number of timeouts before a hard error
+	 * @returns Promise<void>
 	 */
 	const process_status = async function(status, label, on_success, on_fail, counter, maxTimeouts) {
 		if ( !counter ) {
@@ -116,8 +122,6 @@ frappe.ready(function() {
 		if ( !maxTimeouts) {
 			maxTimeouts = 6;
 		}
-
-		console.log("Processing status: ", status);
 
 		if ( status.status === "NotFound" ) {
 			// No previous PR request found. So lets display the UI
@@ -239,7 +243,6 @@ frappe.ready(function() {
 
 		// issue credit card charge
 		await charge(card, null, async (status, err) => {
-			console.log("ON FAIL: ", status, err);
 			if ( err ) {
 				if ( !navigator.onLine || err.status === 0 ) {
 					// We lost connection or timedout
