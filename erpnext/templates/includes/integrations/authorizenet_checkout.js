@@ -76,6 +76,13 @@ frappe.ready(function() {
 							maxTimeouts
 						);
 						return; // only early exit when queuing up a delayed check_status.
+					} else if ( on_fail ) {
+						on_fail({
+							"status": "Failed",
+							"type": "HardError",
+							"description": "Network problem! Unfortunately we could to connect with our server. If your internet is down please try again later. Otherwise, contact support to help with your transction."
+						});
+						return;
 					}
 				}
 			}
@@ -91,7 +98,7 @@ frappe.ready(function() {
 	 * @param {string} label Feedback text to display to the user
 	 */
 	const start_status_check = function(label) {
-		$('#please-wait').text(label || "Please Wait...");
+		$('#please-wait').text(__(label || "Please Wait..."));
 		$('#please-wait').fadeIn('fast');
 		$('#payment-form').fadeOut('fast');
 	}
@@ -133,21 +140,31 @@ frappe.ready(function() {
 			if ( on_success ) {
 				await on_success(status);
 			}
-			$('#please-wait').text("Payment was successful. Please wait while we redirect you.");
+			$('#please-wait').text(__("Payment was successful! Please wait while we redirect you."));
 
 			window.location.href = "/integrations/payment-success";
 		} else if (status.status === "Queued" ) {
 			// Processing not completed. Wait for Queue
+			$('#please-wait').text(__("Request is taking longer than expected. Please wait..."));
 			setTimeout(function() { check_status(data, label, on_success, on_fail, counter+1, maxTimeouts) }, status.wait );
 
 		} else if (status.status === "Failed") {
 			if ( status.type === "Validation" ) {
 				// On validation errors, re-enable form
-				frappe.msgprint(__(`${status.description}`));
+				frappe.msgprint(__(status.description || ""));
 				show_form();
 				$('#submit').prop('disabled', false);
 				$('#submit').html(__('Retry'));
 
+				if ( on_fail ) {
+					await on_fail(status);
+				}
+			} else if ( status.type === "HardError" ) {
+				if ( status.description ) {
+					$('#please-wait').text(__(status.description));
+				} else {
+					$('#please-wait').text(__("There was an uhandled internal error. Please try again or contact support."));
+				}
 				if ( on_fail ) {
 					await on_fail(status);
 				}
@@ -238,15 +255,16 @@ frappe.ready(function() {
 			frappe.throw(__("Card Code length should be between 3 and 4 characters"));
 		}
 
-		$('#submit').prop('disabled', true);
-		$('#submit').html(__('Processing...'));
+		$('#submit').prop("disabled", true);
+		$('#submit').html(__("Processing..."));
 
 		// issue credit card charge
 		await charge(card, null, async (status, err) => {
 			if ( err ) {
 				if ( !navigator.onLine || err.status === 0 ) {
-					// We lost connection or timedout
+					// We lost connection or timed out
 					// Check status until network is back or timeout again
+					// Default should be around 6 times or 30 seconds.
 					check_status(data, 
 						"Detected a network problem. Trying to reconnect, please wait...",
 						null, null, 0);
@@ -255,6 +273,8 @@ frappe.ready(function() {
 
 			if ( status.status === "Fail" && status.type === "Duplicate" ) {
 				// Allow up to one more request after a duplicate with a 10 second delay.
+				// This can happen if a card is decliened but the next request is sent before
+				// the duplicate window guard window.
 				setTimeout(() =>charge(card), 10000);
 			}
 		});
@@ -281,7 +301,8 @@ frappe.ready(function() {
 	});
 
 	// ping server first to check if this PR was already fullfilled.
-	check_status(data, "Loading...", null, async (status, err) => {
+	check_status(data, "Loading...", null, async function(status, err) {
+		// During any soft failure, display card form.
 		show_form();
 	}, 0);
 });
