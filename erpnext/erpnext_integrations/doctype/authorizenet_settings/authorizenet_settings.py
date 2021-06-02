@@ -314,7 +314,7 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 					.get("description", "")
 
 			if description:
-				result.update({ "description": description})
+				result.update({"description": description})
 
 		elif status == "Failed":
 			description = response_dict.get(
