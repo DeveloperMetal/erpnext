@@ -104,7 +104,7 @@ frappe.ready(function() {
 	}
 
 	/**
-	 * Displays the credit card form and mides message label.
+	 * Displays the credit card form and hides message label.
 	 */
 	const show_form = function() {
 		$('#please-wait').fadeOut('fast');
