@@ -80,7 +80,7 @@ frappe.ready(function() {
 						on_fail({
 							"status": "Failed",
 							"type": "HardError",
-							"description": "Network problem! Unfortunately we could to connect with our server. If your internet is down please try again later. Otherwise, contact support to help with your transction."
+							"description": "Network problem! Unfortunately we could not connect to our server. If your internet is down please try again later. Otherwise, contact support to help with your transaction."
 						});
 						return;
 					}
