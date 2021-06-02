@@ -279,7 +279,7 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 		"card_code": card_code
 	})
 
-	# Charge chard step
+	# Charge card step
 	def tryChargeCard(i):
 		# ping authnet first to check if transaction was previously made
 		order_transaction = query_successful_authnet_transaction(request)
