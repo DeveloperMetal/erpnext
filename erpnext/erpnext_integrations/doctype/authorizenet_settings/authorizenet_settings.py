@@ -104,7 +104,8 @@ def get_order_request_info(reference_doctype, reference_docname):
 			"integration_request_service": "Authorizenet",
 			"integration_type": "Host"
 		},
-		order_by="modified desc"
+		order_by="modified desc",
+		limit=1
 	)
 
 	if len(existing_requests) > 0:
