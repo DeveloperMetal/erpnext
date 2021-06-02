@@ -113,7 +113,7 @@ frappe.ready(function() {
 
 
 	/**
-	 * Helper function, all status descitions 
+	 * Helper function, all status descriptions 
 	 * @param {ProcessStatus} status The status object sent from the backend
 	 * @param {string} label A label to display to the user during processing
 	 * @param {onCardProcessSuccess} on_success a Success function callback. 
