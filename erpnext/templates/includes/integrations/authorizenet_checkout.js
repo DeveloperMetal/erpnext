@@ -235,10 +235,6 @@ frappe.ready(function() {
 			frappe.throw(__("Card Holder Email is invalid."));
 		}
 
-		if (!validate_email(cardHolderEmail)) {
-			frappe.throw(__("Card Holder Email is invalid."));
-		}
-
 		if (!isValidCard.isPotentiallyValid) {
 			frappe.throw(__("Card Number is Invalid."));
 		}
