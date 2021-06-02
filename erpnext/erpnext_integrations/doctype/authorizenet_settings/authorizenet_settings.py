@@ -324,7 +324,7 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 					.get("errorText", "Unknown Error")
 
 			if description:
-				result.update({ "description": description})
+				result.update({"description": description})
 
 			integration_request.error = description
 		else:
