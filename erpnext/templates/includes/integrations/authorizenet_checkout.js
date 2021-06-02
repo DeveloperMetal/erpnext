@@ -80,7 +80,7 @@ frappe.ready(function() {
 						on_fail({
 							"status": "Failed",
 							"type": "HardError",
-							"description": "Network problem! Unfortunately we could to connect with our server. If your internet is down please try again later. Otherwise, contact support to help with your transction."
+							"description": "Network problem! Unfortunately we could not connect to our server. If your internet is down please try again later. Otherwise, contact support to help with your transaction."
 						});
 						return;
 					}
@@ -104,7 +104,7 @@ frappe.ready(function() {
 	}
 
 	/**
-	 * Displays the credit card form and mides message label.
+	 * Displays the credit card form and hides message label.
 	 */
 	const show_form = function() {
 		$('#please-wait').fadeOut('fast');
@@ -113,7 +113,7 @@ frappe.ready(function() {
 
 
 	/**
-	 * Helper function, all status descitions 
+	 * Helper function, all status descriptions 
 	 * @param {ProcessStatus} status The status object sent from the backend
 	 * @param {string} label A label to display to the user during processing
 	 * @param {onCardProcessSuccess} on_success a Success function callback. 
@@ -231,10 +231,6 @@ frappe.ready(function() {
 			frappe.throw(__("Card Holder Email is mandatory."));
 		}
 		
-		if (!validate_email(cardHolderEmail)) {
-			frappe.throw(__("Card Holder Email is invalid."));
-		}
-
 		if (!validate_email(cardHolderEmail)) {
 			frappe.throw(__("Card Holder Email is invalid."));
 		}

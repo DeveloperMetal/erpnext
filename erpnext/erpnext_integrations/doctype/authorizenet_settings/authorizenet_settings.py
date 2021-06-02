@@ -104,7 +104,8 @@ def get_order_request_info(reference_doctype, reference_docname):
 			"integration_request_service": "Authorizenet",
 			"integration_type": "Host"
 		},
-		order_by="modified desc"
+		order_by="modified desc",
+		limit=1
 	)
 
 	if len(existing_requests) > 0:
@@ -150,9 +151,9 @@ def query_successful_authnet_transaction(request):
 	# Work on the response
 	response = unsettledTransactionListController.getresponse()
 
-	if response is not None:
-		if response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok:
-			if hasattr(response, 'transactions'):
+	if response is not None and \
+		response.messages.resultCode == apicontractsv1.messageTypeEnum.Ok and \
+		hasattr(response, 'transactions'):
 				for transaction in response.transactions.transaction:
 					if (transaction.transactionStatus == "capturedPendingSettlement" or \
 						transaction.transactionStatus == "authorizedPendingCapture") and \
