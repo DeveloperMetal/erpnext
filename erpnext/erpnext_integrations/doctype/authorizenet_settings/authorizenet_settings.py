@@ -258,6 +258,25 @@ def charge_credit_card(card, data):
 	if status.get("status") != "Failed" and status.get("status") != "NotFound":
 		return status
 
+	# sanity gate keeper. Don't process anything without reference doctypes
+	if not data.reference_doctype or not data.reference_docname:
+		return {
+			"status": "Failed",
+			"description": "Invalid request. Submitted data contains no order reference. This seems to be an internal error. Please contact support."
+		}
+
+	# fetch previous requests info
+	request_info = get_order_request_info(data.reference_doctype, data.reference_docname)
+
+	# and document references
+	pr = frappe.get_doc(data.reference_doctype, data.reference_docname)
+	reference_doc = frappe.get_doc(pr.reference_doctype, pr.reference_name)
+
+	# Sanity check. Make sure to not process card if a previous request was fullfilled
+	status = get_status(data)
+	if status.get("status") != "Failed" and status.get("status") != "NotFound":
+		return status
+
 	# Create Integration Request
 	integration_request = create_request_log(data, "Host", "Authorizenet")
 
@@ -312,7 +331,7 @@ def charge_credit_card(card, data):
 					.get("description", "")
 
 			if description:
-				result.update({ "description": description})
+				result.update({"description": description})
 
 		elif status == "Failed":
 			description = response_dict.get(
@@ -322,7 +341,7 @@ def charge_credit_card(card, data):
 					.get("errorText", "Unknown Error")
 
 			if description:
-				result.update({ "description": description})
+				result.update({"description": description})
 
 			integration_request.error = description
 		else:

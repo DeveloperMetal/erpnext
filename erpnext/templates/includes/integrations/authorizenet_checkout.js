@@ -14,13 +14,13 @@
  */
 
 /**
-* @typedef {Object} ProcessStatus
-* @property {string} status Status enum. Possible values: "Completed", "NotFound", "Queued", "Failed".
-* @property {string} type On a failed request. The type is one of: "Validation", "HardError", "Timeout", "Unhandled"
-* @property {string} description A reason message for the status returned.
-* @property {int} wait An amount of time the client should wait before issuing 
-*                      another status check request in milliseconds.
-*/
+ * @typedef {Object} ProcessStatus
+ * @property {string} status Status enum. Possible values: "Completed", "NotFound", "Queued", "Failed".
+ * @property {string} type On a failed request. The type is one of: "Validation", "HardError", "Timeout", "Unhandled"
+ * @property {string} description A reason message for the status returned.
+ * @property {int} wait An amount of time the client should wait before issuing 
+ *                      another status check request in milliseconds.
+ */
 
 frappe.ready(function () {
 	const data = context.replace(/'/g, '"');
