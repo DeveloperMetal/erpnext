@@ -232,12 +232,12 @@ def get_status(data):
 
 
 @frappe.whitelist()
-def charge_credit_card(data, card_number, expiration_date, card_code):
+def charge_credit_card(card, data):
 	"""
 	Charge a credit card
 	"""
-	data = json.loads(data)
-	data = frappe._dict(data)
+	data = frappe._dict(json.loads(data))
+	card = frappe._dict(json.loads(card))
 
 	# sanity gate keeper. Don't process anything without reference doctypes
 	if not data.reference_doctype or not data.reference_docname:
@@ -274,9 +274,7 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 		"data": data,
 		"merchant_auth": merchant_auth,
 		"integration_request": integration_request,
-	 	"card_number": card_number,
-		"expiration_date": expiration_date, 
-		"card_code": card_code
+		"card": card
 	})
 
 	# Charge chard step
@@ -340,6 +338,13 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 		if status != "Failed":
 			try:
 				pr.run_method("on_payment_authorized", status)
+				# now update Payment Entry to store card holder name for record keeping
+				pe_list = frappe.get_all("Payment Entry", filters={"reference_no": pr.name})
+				if len(pe_list) > 0:
+					pe_name = pe_list[0]
+					remarks = frappe.db.get_value("Payment Entry", pe_name, "remarks")
+					remarks = "{}\n---\nCard Holder: {}".format(remarks, card.holder_name)
+					frappe.db.set_value("Payment Entry", pe_name, "remarks", remarks)
 			except Exception as ex:
 				# we have a payment, however an internal process broke
 				# so, log it and add a comment on the reference document.
@@ -390,22 +395,47 @@ def charge_credit_card(data, card_number, expiration_date, card_code):
 def authnet_charge(request):
 	# data refs
 	data = request.data
+	card = request.card
 	reference_doc = request.reference_doc
 
 	# Create the payment data for a credit card
 	credit_card = apicontractsv1.creditCardType()
-	credit_card.cardNumber = request.card_number
-	credit_card.expirationDate = request.expiration_date
-	credit_card.cardCode = request.card_code
+	credit_card.cardNumber = request.card.number
+	credit_card.expirationDate = request.card.expiration_date
+	credit_card.cardCode = request.card.code
 
 	# Add the payment data to a paymentType object
 	payment = apicontractsv1.paymentType()
 	payment.creditCard = credit_card
 
+	# determin company name to attach to customer address record
+	customer_name = None
+	if reference_doc.doctype == "Quotation" and frappe.db.exists("Customer", reference_doc.party_name):
+		# sanity test, only fetch customer record from party_name
+		customer_name = reference_doc.party_name
+	else:
+		customer_name = reference_doc.customer
+
+	name_parts = card.holder_name.split(None, 1)
 	customer_address = apicontractsv1.customerAddressType()
-	customer_address.firstName = data.payer_name
-	customer_address.email = data.payer_email
-	customer_address.address = reference_doc.customer_address[:60]
+	customer_address.firstName = name_parts[0] or data.payer_name
+	customer_address.lastName = name_parts[1] if len(name_parts) > 1 else ""
+	customer_address.email = card.holder_email or data.payer_email
+
+	# setting billing address details
+	if frappe.db.exists("Address", reference_doc.customer_address):
+		address = frappe.get_doc("Address", reference_doc.customer_address)
+		customer_address.address = (address.address_line1 or "")[:60]
+		customer_address.city = (address.city or "")[:40]
+		customer_address.state = (address.state or "")[:40]
+		customer_address.zip = (address.pincode or "")[:20]
+		customer_address.country = (address.country or "")[:60]
+
+
+	# record company name when not an individual
+	customer_type = frappe.db.get_value("Customer", customer_name, "customer_type")
+	if customer_type != "Individual":
+		customer_address.company = reference_doc.customer_name
 
 	# Create order information
 	order = apicontractsv1.orderType()
