@@ -358,7 +358,7 @@ def charge_credit_card(card, data):
 			try:
 				pr.run_method("on_payment_authorized", status)
 				# now update Payment Entry to store card holder name for record keeping
-				pe_list = frappe.get_all("Payment Entry", filters={"reference_no": pr.name})
+				pe_list = frappe.get_all("Payment Entry", filters={"reference_no": pr.name}, limit=1)
 				if len(pe_list) > 0:
 					pe_name = pe_list[0]
 					remarks = frappe.db.get_value("Payment Entry", pe_name, "remarks")
