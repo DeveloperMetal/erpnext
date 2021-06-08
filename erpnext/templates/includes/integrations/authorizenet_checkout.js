@@ -1,71 +1,77 @@
 $('#submit').on("click", function(e) {
-	let data = context.replace(/'/g, '"');
 	e.preventDefault();
+	try {
+		let data = context;
 
-	let cardHolderName = document.getElementById('cardholder-name').value;
-	let cardHolderEmail = document.getElementById('cardholder-email').value;
-	let cardNumberWithSpaces = document.getElementById('card-number').value;
-	let cardNumber = cardNumberWithSpaces.replace(/ /g,"");
-	let expirationMonth = document.getElementById('card-expiry-month').value;
-	let expirationYear = document.getElementById('card-expiry-year').value;
-	let expirationDate = expirationYear.concat("-").concat(expirationMonth);
-	let cardCode = document.getElementById('card-code').value;
-	let isValidCard = frappe.cardValidator.number(cardNumber);
+		let cardHolderName = document.getElementById('cardholder-name').value;
+		let cardHolderEmail = document.getElementById('cardholder-email').value;
+		let cardNumberWithSpaces = document.getElementById('card-number').value;
+		let cardNumber = cardNumberWithSpaces.replace(/ /g,"");
+		let expirationMonth = document.getElementById('card-expiry-month').value;
+		let expirationYear = document.getElementById('card-expiry-year').value;
+		let expirationDate = expirationYear.concat("-").concat(expirationMonth);
+		let cardCode = document.getElementById('card-code').value;
+		let isValidCard = frappe.cardValidator.number(cardNumber);
 
-	if (!cardHolderName) {
-		frappe.throw(__("Card Holder Name is mandatory."));
-	}
-
-	if (!cardHolderEmail) {
-		frappe.throw(__("Card Holder Email is mandatory."));
-	}
-	
-	if (!validate_email(cardHolderEmail)) {
-		frappe.throw(__("Card Holder Email is invalid."));
-	}
-
-	if (!validate_email(cardHolderEmail)) {
-		frappe.throw(__("Card Holder Email is invalid."));
-	}
-
-	if (!isValidCard.isPotentiallyValid) {
-		frappe.throw(__("Card Number is Invalid."));
-	}
-
-	if(cardNumber.length < 13 || cardNumber.length > 16){
-		frappe.throw(__("Card Number length should be between 13 and 16 characters"));
-	}
-
-	if(expirationMonth === "00" || expirationMonth.length !== 2 || expirationYear === "0000" || expirationYear.length !== 4){
-		frappe.throw(__("Card Expiration Date is invalid"));
-	}
-
-	if(cardCode.length < 3 || cardCode.length > 4){
-		frappe.throw(__("Card Code length should be between 3 and 4 characters"));
-	}
-
-	$('#submit').prop('disabled', true);
-	$('#submit').html(__('Processing...'));
-
-	frappe.call({
-		method: "erpnext.erpnext_integrations.doctype.authorizenet_settings.authorizenet_settings.charge_credit_card",
-		freeze: true,
-		args: {
-			"card_number": cardNumber,
-			"expiration_date": expirationDate,
-			"card_code": cardCode,
-			"data": data
-		},
-		callback: function(r) {
-			if (r.message.status === "Completed") {
-				window.location.href = "/integrations/payment-success";
-			} else {
-				frappe.msgprint(__(`${r.message.description}`));
-				$('#submit').prop('disabled', false);
-				$('#submit').html(__('Retry'));
-			}
+		if (!cardHolderName) {
+			frappe.throw(__("Card Holder Name is mandatory."));
 		}
-	});
+
+		if (!cardHolderEmail) {
+			frappe.throw(__("Card Holder Email is mandatory."));
+		}
+		
+		if (!validate_email(cardHolderEmail)) {
+			frappe.throw(__("Card Holder Email is invalid."));
+		}
+
+		if (!validate_email(cardHolderEmail)) {
+			frappe.throw(__("Card Holder Email is invalid."));
+		}
+
+		if (!isValidCard.isPotentiallyValid) {
+			frappe.throw(__("Card Number is Invalid."));
+		}
+
+		if(cardNumber.length < 13 || cardNumber.length > 16){
+			frappe.throw(__("Card Number length should be between 13 and 16 characters"));
+		}
+
+		if(expirationMonth === "00" || expirationMonth.length !== 2 || expirationYear === "0000" || expirationYear.length !== 4){
+			frappe.throw(__("Card Expiration Date is invalid"));
+		}
+
+		if(cardCode.length < 3 || cardCode.length > 4){
+			frappe.throw(__("Card Code length should be between 3 and 4 characters"));
+		}
+
+		$('#submit').prop('disabled', true);
+		$('#submit').html(__('Processing...'));
+
+		frappe.call({
+			method: "erpnext.erpnext_integrations.doctype.authorizenet_settings.authorizenet_settings.charge_credit_card",
+			freeze: true,
+			args: {
+				"card_number": cardNumber,
+				"expiration_date": expirationDate,
+				"card_code": cardCode,
+				"data": data
+			},
+			callback: function(r) {
+				if (r.message.status === "Completed") {
+					window.location.href = "/integrations/payment-success";
+				} else {
+					frappe.msgprint(__(`${r.message.description}`));
+					$('#submit').prop('disabled', false);
+					$('#submit').html(__('Retry'));
+				}
+			}
+		});
+	} catch(err) {
+		console.error(err);
+		e.preventDefault();
+		return false;
+	}
 });
 
 $('input[data-validation="digit"]')

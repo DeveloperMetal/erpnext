@@ -6,8 +6,8 @@
 <script>
 	{% include "templates/includes/integrations/authorizenet_checkout.js" %}
 </script>
-<script>
-	context = "{{ payment_context }}"
+<script type="text/javascript">
+	const context = {{ payment_context | json}};
 </script>
 {% endblock %}
 
