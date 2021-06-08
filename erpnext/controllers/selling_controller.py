@@ -60,6 +60,9 @@ class SellingController(StockController):
 				coupon_customer = coupon.allowed_customer
 				coupon_customer_group = coupon.allowed_customer_group
 
+				if not coupon.enabled:
+					frappe.throw(_("Coupon \"{}\" is not a valid coupon").format(self.coupon_code))
+
 				if coupon.valid_from:
 					if coupon.valid_from > getdate(today()):
 						frappe.throw(_("Sorry, this coupon code's validity has not started"), title=_("Coupon Error"))
@@ -70,9 +73,6 @@ class SellingController(StockController):
 					frappe.throw(_("Sorry, this coupon code is no longer valid"), title=_("Coupon Error"))
 
 				party_name = self.customer_name if self.doctype != "Quotation" else self.party_name
-
-				if not coupon.enabled:
-					frappe.throw(_("Coupon \"{}\" is not a valid coupon").format(self.coupon_code))
 
 				if self.doctype == "Quotation" and self.quotation_to != "Customer":
 					if coupon_customer or coupon_customer_group:
